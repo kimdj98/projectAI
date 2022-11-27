@@ -6,7 +6,7 @@
   "num_outputs": 10,
 
   "learning_rate": 0.005,
-  "epochs": 20000,
+  "epochs": 6000,
 
   "folds": 3
 }

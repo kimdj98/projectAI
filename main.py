@@ -79,9 +79,9 @@ principalDf = pd.DataFrame(data = principalComponents,
 y_train_series = pd.Series(y_train.reshape(-1))
 finalDf1 = pd.concat([principalDf, y_train_series], axis = 1)
 
-plt.scatter(np.array(finalDf1['principal component 1']),
-            np.array(finalDf1['principal component 2']),
-            c = np.array(finalDf1.loc[:,0]))
+# plt.scatter(np.array(finalDf1['principal component 1']),
+#             np.array(finalDf1['principal component 2']),
+#             c = np.array(finalDf1.loc[:,0]))
 
 # execute pca analysis
 pca = PCA(n_components=2)
@@ -92,10 +92,10 @@ principalDf = pd.DataFrame(data = principalComponents,
 y_test_series = pd.Series(y_test.reshape(-1))
 finalDf2 = pd.concat([principalDf, y_test_series], axis = 1)
 
-plt.scatter(np.array(finalDf2['principal component 1']),
-            np.array(finalDf2['principal component 2']),
-            c = np.array(finalDf2.loc[:,0]),
-            label = np.array(finalDf2.loc[:,0]))
+# plt.scatter(np.array(finalDf2['principal component 1']),
+#             np.array(finalDf2['principal component 2']),
+#             c = np.array(finalDf2.loc[:,0]),
+#             label = np.array(finalDf2.loc[:,0]))
 # plt.show()
 
 
@@ -156,8 +156,8 @@ class MLP(nn.Module):
         return None
 
     def evaluation(self, X_test, y_test):
-        y_hat = self.forward(X_test)
-        return torch.sqrt(self.criterion(y_test, y_hat))
+        y_hat = torch.argmax(self.forward(X_test), axis = 1)
+        return torch.mean((y_test == y_hat).float())
 
 X_train = np.array(X_train) # pandas dataframe to numpy
 y_train = np.array(y_train) # pandas dataframe to numpy

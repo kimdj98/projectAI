@@ -1,0 +1,12 @@
+{
+  "name": "quiz13_kimdongjae",
+
+  "num_inputs": 2,
+  "num_hiddens": 16,
+  "num_outputs": 1,
+
+  "learning_rate": 0.005,
+  "epochs": 20000,
+
+  "folds": 3
+}

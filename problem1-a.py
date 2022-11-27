@@ -72,25 +72,23 @@ for i in range(10000):
 
 # # execute pca analysis
 pca = PCA(n_components=2)
-principalComponents = pca.fit_transform(X_train)
-principalDf = pd.DataFrame(data = principalComponents,
-                           columns = ['principal component 1', 'principal component 2'])
-
-y_train_series = pd.Series(y_train.reshape(-1))
-finalDf1 = pd.concat([principalDf, y_train_series], axis = 1)
-
+principalComponents_train = pca.fit_transform(X_train)
+# principalDf = pd.DataFrame(data = principalComponents)
+#
+# y_train_series = pd.Series(y_train.reshape(-1))
+# finalDf1 = pd.concat([principalDf, y_train_series], axis = 1)
+#
 # plt.scatter(np.array(finalDf1['principal component 1']),
 #             np.array(finalDf1['principal component 2']),
 #             c = np.array(finalDf1.loc[:,0]))
 
 # execute pca analysis
-pca = PCA(n_components=2)
-principalComponents = pca.fit_transform(X_test)
-principalDf = pd.DataFrame(data = principalComponents,
-                           columns = ['principal component 1', 'principal component 2'])
-
-y_test_series = pd.Series(y_test.reshape(-1))
-finalDf2 = pd.concat([principalDf, y_test_series], axis = 1)
+principalComponents_test = pca.fit_transform(X_test)
+# principalDf = pd.DataFrame(data = principalComponents,
+#                            columns = ['principal component 1', 'principal component 2'])
+#
+# y_test_series = pd.Series(y_test.reshape(-1))
+# finalDf2 = pd.concat([principalDf, y_test_series], axis = 1)
 
 # plt.scatter(np.array(finalDf2['principal component 1']),
 #             np.array(finalDf2['principal component 2']),
@@ -169,17 +167,22 @@ y_train = torch.from_numpy(y_train).long() # numpy to torch tensor
 X_test = torch.from_numpy(X_test).float() # numpy to torch tensor
 y_test = torch.from_numpy(y_test).long() # numpy to torch tensor
 
-X_train = np.array(finalDf1[['principal component 1', 'principal component 2']])
-y_train = np.array(finalDf1.loc[:,0])
+X_train = np.array(principalComponents_train)
+y_train = np.array(y_train)
+y_train = y_train.reshape(-1) # reshape n*1 to 1d n
 
 X_train = torch.from_numpy(X_train).float() # numpy to torch tensor
 y_train = torch.from_numpy(y_train).long() # numpy to torch tensor
 
-X_test = np.array(finalDf2[['principal component 1', 'principal component 2']])
-y_test = np.array(finalDf2.loc[:,0])
+X_test = np.array(principalComponents_test)
+y_test = np.array(y_test)
+y_test = y_test.reshape(-1) # reshape n*1 to 1d n
 
 X_test = torch.from_numpy(X_test).float() # numpy to torch tensor
 y_test = torch.from_numpy(y_test).long() # numpy to torch tensor
 
 network = MLP(configs)
 network.train(X_train, y_train)
+
+print(network.evaluation(X_train, y_train))
+print(network.evaluation(X_test, y_test))

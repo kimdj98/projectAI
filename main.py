@@ -11,6 +11,15 @@ from torch import nn
 from torch import optim
 from torch.utils.data import Dataset, DataLoader, random_split
 
+#==================================================================================================================
+#   use configuration file to adjust hyper parameters
+#==================================================================================================================
+import json
+
+with open('config.json') as config_file:
+    configs = json.load(config_file)
+#==================================================================================================================
+
 # Normalize data with mean=0.5, std=1.0
 mnist_transform = transforms.Compose([
     transforms.ToTensor(),
@@ -62,15 +71,17 @@ for i in range(10000):
     y_test[i, :] = test_dataset[i][1]
 
 # # execute pca analysis
-# pca = PCA(n_components=2)
-# principalComponents = pca.fit_transform(X_train)
-# principalDf = pd.DataFrame(data = principalComponents,
-#                            columns = ['principal component 1', 'principal component 2'])
-#
-# y_train_series = pd.Series(y_train.reshape(-1))
-# finalDf = pd.concat([principalDf, y_train_series], axis = 1)
-#
-# plt.scatter(np.array(finalDf['principal component 1']), np.array(finalDf['principal component 2']), c = np.array(finalDf.loc[:,0]))
+pca = PCA(n_components=2)
+principalComponents = pca.fit_transform(X_train)
+principalDf = pd.DataFrame(data = principalComponents,
+                           columns = ['principal component 1', 'principal component 2'])
+
+y_train_series = pd.Series(y_train.reshape(-1))
+finalDf1 = pd.concat([principalDf, y_train_series], axis = 1)
+
+plt.scatter(np.array(finalDf1['principal component 1']),
+            np.array(finalDf1['principal component 2']),
+            c = np.array(finalDf1.loc[:,0]))
 
 # execute pca analysis
 pca = PCA(n_components=2)
@@ -79,11 +90,13 @@ principalDf = pd.DataFrame(data = principalComponents,
                            columns = ['principal component 1', 'principal component 2'])
 
 y_test_series = pd.Series(y_test.reshape(-1))
-finalDf = pd.concat([principalDf, y_test_series], axis = 1)
+finalDf2 = pd.concat([principalDf, y_test_series], axis = 1)
 
-plt.scatter(np.array(finalDf['principal component 1']), np.array(finalDf['principal component 2']), c = np.array(finalDf.loc[:,0]), label = np.array(finalDf.loc[:,0]))
-plt.legend()
-plt.show()
+plt.scatter(np.array(finalDf2['principal component 1']),
+            np.array(finalDf2['principal component 2']),
+            c = np.array(finalDf2.loc[:,0]),
+            label = np.array(finalDf2.loc[:,0]))
+# plt.show()
 
 
 # network architecture
@@ -101,11 +114,12 @@ class MLP(nn.Module):
         self.epochs = self.configs["epochs"]
 
         self.model = nn.Sequential(
-            nn.Linear(self.num_inputs, self.num_outputs)
+            nn.Linear(self.num_inputs, self.num_outputs),
+            nn.Softmax()
         )
 
         # set criterion and optimizer
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr = self.learning_rate)
 
         # weight initialization (initialize weight with standard normal distribution)
@@ -117,14 +131,14 @@ class MLP(nn.Module):
     def forward(self, data):
         return self.model(data)
 
-    def train(self, training_input, training_output, monitor = True):
+    def train(self, X_train, y_train, monitor = True):
         epochs = self.configs["epochs"]
         self.loss_history = np.zeros(epochs)
 
         for iteration in range(epochs):
             # predict the model and calculate the loss
-            outputs = self.model(training_input)
-            loss = self.criterion(outputs, training_output)  # apply torch.sqrt to use MSE as loss fn
+            y_hat = self.forward(X_train)
+            loss = self.criterion(y_hat, y_train)  # apply torch.sqrt to use MSE as loss fn
 
             # back_propagation one time
             self.optimizer.zero_grad()
@@ -144,3 +158,28 @@ class MLP(nn.Module):
     def evaluation(self, X_test, y_test):
         y_hat = self.forward(X_test)
         return torch.sqrt(self.criterion(y_test, y_hat))
+
+X_train = np.array(X_train) # pandas dataframe to numpy
+y_train = np.array(y_train) # pandas dataframe to numpy
+X_test = np.array(X_test) # pandas dataframe to numpy
+y_test = np.array(y_test) # pandas dataframe to numpy
+
+X_train = torch.from_numpy(X_train).float() # numpy to torch tensor
+y_train = torch.from_numpy(y_train).long() # numpy to torch tensor
+X_test = torch.from_numpy(X_test).float() # numpy to torch tensor
+y_test = torch.from_numpy(y_test).long() # numpy to torch tensor
+
+X_train = np.array(finalDf1[['principal component 1', 'principal component 2']])
+y_train = np.array(finalDf1.loc[:,0])
+
+X_train = torch.from_numpy(X_train).float() # numpy to torch tensor
+y_train = torch.from_numpy(y_train).long() # numpy to torch tensor
+
+X_test = np.array(finalDf2[['principal component 1', 'principal component 2']])
+y_test = np.array(finalDf2.loc[:,0])
+
+X_test = torch.from_numpy(X_test).float() # numpy to torch tensor
+y_test = torch.from_numpy(y_test).long() # numpy to torch tensor
+
+network = MLP(configs)
+network.train(X_train, y_train)

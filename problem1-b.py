@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import torch
 from torch import nn
 from torch import optim
+import torch.nn.functional as F
 
 #==================================================================================================================
 #   use configuration file to adjust hyper parameters
@@ -23,7 +24,7 @@ with open('config.json') as config_file:
 # Normalize data with mean=0.5, std=1.0
 mnist_transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize((0.5,), (1.0,))
+    transforms.Normalize((0.1307,), (0.3081,))
 ])
 
 from torchvision.datasets import MNIST
@@ -85,31 +86,28 @@ class CNN(nn.Module):
         self.model = nn.Sequential(
             nn.Conv2d(1, 32, kernel_size=5, padding=2), # 28 X 28
             nn.Conv2d(32, 32, kernel_size=5, padding=2), # 28 x 28
-            # nn.BatchNorm2d(32),
-            nn.ReLU(),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2), # 14 x 14
 
             nn.Conv2d(32, 64, kernel_size=5, padding=2), # 14 x 14
             nn.Conv2d(64, 64, kernel_size=5, padding=2), # 14 x 14
-            # nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2), # 7 x 7
 
             nn.Conv2d(64, 128, kernel_size=5, padding=2),  # 7 x 7
             nn.Conv2d(128, 128, kernel_size=5, padding=2),  # 7 x 7
-            # nn.BatchNorm2d(128),
-            nn.ReLU(),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2),  # 3 x 3
             nn.Flatten(), # 128*3*3
         )
         self.fc1 = nn.Linear(128*3*3,2)
+        nn.init.xavier_uniform_(self.fc1.weight)
         self.fc2 = nn.Linear(2,10)
+        nn.init.xavier_uniform_(self.fc2.weight)
 
-        # weight initialization (initialize weight with standard normal distribution)
-        for m in self.model.modules():
-            if isinstance(m, nn.Linear):
-                nn.init.normal(m.weight, mean=0.0, std=1.0)
-                nn.init.normal(m.bias, mean=0.0, std=1.0)
 
     def forward(self, x):
         x = self.model(x)
@@ -121,37 +119,39 @@ class CNN(nn.Module):
         x = self.model(x)
         x = self.fc1(x)
         return x
-
-    def train(self, train_loader, test_loader, monitor = True):
-        epochs = self.configs["epochs"]
-        self.loss_history = np.zeros(epochs)
-
-        # set criterion and optimizer
-        self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.Adam(self.parameters(), lr = self.learning_rate)
-
-        for iteration in range(epochs):
-            for data in train_loader:
-                X_train = data[0]
-                y_train = data[1]
-                # predict the model and calculate the loss
-                y_hat = self.forward(X_train)
-                loss = self.criterion(y_hat, y_train)  # apply torch.sqrt to use MSE as loss fn
-
-                # back_propagation one time
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-
-            # store loss data for plotting
-            self.loss_history[iteration] = loss.item()
-
-            # print to console tendency of loss
-            if monitor:
-                # if (iteration + 1) % 200 == 0:
-                print(f'Epoch: {iteration + 1} / {epochs}, Train Loss: {loss.item():.4f}')
-                print(f'Train Accuracy: {self.evaluation(train_loader):.4f}, Test Accuracy: {self.evaluation(test_loader):.4f}')
-        return None
+    #
+    # def train(self, train_loader, test_loader, monitor = True):
+    #     epochs = self.configs["epochs"]
+    #     self.loss_history = np.zeros(epochs)
+    #
+    #     # set criterion and optimizer
+    #     self.criterion = nn.CrossEntropyLoss()
+    #     self.optimizer = torch.optim.Adam(self.parameters(), lr = self.learning_rate)
+    #
+    #     for iteration in range(epochs):
+    #         for data in train_loader:
+    #             X_train = data[0]
+    #             y_train = data[1]
+    #
+    #             self.optimizer.zero_grad()
+    #
+    #             # predict the model and calculate the loss
+    #             y_hat = self.forward(X_train)
+    #             loss = self.criterion(y_hat, y_train)  # apply torch.sqrt to use MSE as loss fn
+    #
+    #             # back_propagation one time
+    #             loss.backward()
+    #             self.optimizer.step()
+    #
+    #         # store loss data for plotting
+    #         self.loss_history[iteration] = loss.item()
+    #
+    #         # print to console tendency of loss
+    #         if monitor:
+    #             # if (iteration + 1) % 200 == 0:
+    #             print(f'Epoch: {iteration + 1} / {epochs}, Train Loss: {loss.item():.4f}')
+    #             print(f'Train Accuracy: {self.evaluation(train_loader):.4f}, Test Accuracy: {self.evaluation(test_loader):.4f}')
+    #     return None
 
     def evaluation(self, dataloader):
         count = 0
@@ -182,4 +182,50 @@ y_train = torch.from_numpy(y_train)
 y_train = y_train.long()
 
 network = CNN(configs)
-network.train(train_loader, test_loader)
+
+# function to evaluate network
+def evaluation(network, dataloader):
+    count = 0
+    accuracy = 0.0
+    for data in dataloader:
+        X_test = data[0]
+        y_test = data[1]
+        y_hat = torch.argmax(network.forward(X_test), axis = 1)
+        accuracy += torch.sum((y_test == y_hat).float()) # sum all the matched samples
+
+    accuracy = accuracy / (len(dataloader) * dataloader.batch_size) # divide by len of dataset
+
+    return accuracy
+
+evaluation(network, train_loader)
+
+
+#==================================================================================================================
+#   Training Stage
+#==================================================================================================================
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(network.parameters(), configs["learning_rate"])
+print("Start Training")
+for epoch in range(configs["epochs"]):  # loop over the dataset multiple times
+
+    running_loss = 0.0
+    for i, data in enumerate(train_loader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data
+
+        # zero the parameter gradients
+        optimizer.zero_grad()
+
+        # forward + backward + optimize
+        outputs = network(inputs)
+        # print(outputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        # print statistics
+        running_loss = loss.item()
+        print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss:.3f}')
+    print(f'accuracy: {evaluation(network, train_loader)}')
+
+print('Finished Training')

@@ -105,33 +105,33 @@ class CNN(nn.Module):
         self.fc1 = nn.Linear(128*3*3,2)
         self.fc2 = nn.Linear(2,10)
 
-        # set criterion and optimizer
-        self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr = self.learning_rate)
-
         # weight initialization (initialize weight with standard normal distribution)
         for m in self.model.modules():
             if isinstance(m, nn.Linear):
                 nn.init.normal(m.weight, mean=0.0, std=1.0)
                 nn.init.normal(m.bias, mean=0.0, std=1.0)
 
-    def forward(self, data):
-        logits = self.model(data)
-        logits = self.fc1(logits)
-        logits = self.fc2(logits)
-        return logits
+    def forward(self, x):
+        x = self.model(x)
+        x = self.fc1(x)
+        x = self.fc2(x)
+        return x
 
-    def extract_2d(self, X):
-        x = self.model(X)
+    def extract_2d(self, x):
+        x = self.model(x)
         x = self.fc1(x)
         return x
 
-    def train(self, train_dataloader, test_dataloader, monitor = True):
+    def train(self, train_loader, test_loader, monitor = True):
         epochs = self.configs["epochs"]
         self.loss_history = np.zeros(epochs)
 
+        # set criterion and optimizer
+        self.criterion = nn.CrossEntropyLoss()
+        self.optimizer = torch.optim.Adam(self.parameters(), lr = self.learning_rate)
+
         for iteration in range(epochs):
-            for data in train_dataloader:
+            for data in train_loader:
                 X_train = data[0]
                 y_train = data[1]
                 # predict the model and calculate the loss
@@ -149,9 +149,10 @@ class CNN(nn.Module):
             # print to console tendency of loss
             if monitor:
                 # if (iteration + 1) % 200 == 0:
-                print(f'Epoch: {iteration + 1} / {epochs}, Loss: {loss.item():.4f}')
-                print(f'Accuracy: {self.evaluation(test_dataloader)}')
+                print(f'Epoch: {iteration + 1} / {epochs}, Train Loss: {loss.item():.4f}')
+                print(f'Train Accuracy: {self.evaluation(train_loader):.4f}, Test Accuracy: {self.evaluation(test_loader):.4f}')
         return None
+
     def evaluation(self, dataloader):
         count = 0
         accuracy = 0.0
@@ -159,10 +160,11 @@ class CNN(nn.Module):
             X_test = data[0]
             y_test = data[1]
             y_hat = torch.argmax(self.forward(X_test), axis = 1)
-            accuracy += torch.mean((y_test == y_hat).float())
-            count += 1
+            accuracy += torch.sum((y_test == y_hat).float()) # sum all the matched samples
 
-        return torch.mean((y_test == y_hat).float())
+        accuracy = accuracy / (len(dataloader) * dataloader.batch_size) # divide by len of dataset
+
+        return accuracy
 
 
 X_test = torch.from_numpy(X_test)
@@ -180,4 +182,4 @@ y_train = torch.from_numpy(y_train)
 y_train = y_train.long()
 
 network = CNN(configs)
-# network.train(train_loader)
+network.train(train_loader, test_loader)

@@ -261,11 +261,33 @@ print('Finished Training')
 for i, data in enumerate(train_loader, 0):
     inputs, labels = data
     inputs = inputs.to(device)
-    labels = labels.to(device)
+    labels = labels
     output_2d = network.extract_2d(inputs)
     if i == 0:
         output_2d_trains = output_2d.cpu().detach().numpy()
-    else:
+        output_2d_labels = labels.cpu().detach().numpy()
+    if i < 50:
         output_2d_trains = np.vstack((output_2d_trains, output_2d.cpu().detach().numpy()))
+        output_2d_labels = np.concatenate((output_2d_labels, labels))
 
-labels_2d_trains = train_dataset.train_labels.cpu().detach().numpy()
+print(output_2d_trains.shape)
+print(output_2d_labels.shape)
+plt.scatter(output_2d_trains[:,0], output_2d_trains[:,1], c=output_2d_labels)
+plt.show()
+
+for i, data in enumerate(test_loader, 0):
+    inputs, labels = data
+    inputs = inputs.to(device)
+    labels = labels
+    output_2d = network.extract_2d(inputs)
+    if i == 0:
+        output_2d_trains = output_2d.cpu().detach().numpy()
+        output_2d_labels = labels.cpu().detach().numpy()
+    if i < 50:
+        output_2d_trains = np.vstack((output_2d_trains, output_2d.cpu().detach().numpy()))
+        output_2d_labels = np.concatenate((output_2d_labels, labels))
+
+print(output_2d_trains.shape)
+print(output_2d_labels.shape)
+plt.scatter(output_2d_trains[:,0], output_2d_trains[:,1], c=output_2d_labels)
+plt.show()

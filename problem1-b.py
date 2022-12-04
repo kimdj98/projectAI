@@ -193,6 +193,10 @@ y_train = y_train.long()
 
 # function to evaluate network
 def evaluation(network, dataloader):
+    total = 0
+    for data in dataloader:
+        total += 1
+
     accuracy = 0.0
     for data in dataloader:
         X_test = data[0].to(device)
@@ -200,11 +204,15 @@ def evaluation(network, dataloader):
         y_hat = torch.argmax(network.forward(X_test), axis = 1)
         accuracy += torch.sum((y_test == y_hat).float()) # sum all the matched samples
 
-    accuracy = accuracy / (len(dataloader) * dataloader.batch_size) # divide by len of dataset
+    accuracy = accuracy / total # divide by len of dataset
 
     return accuracy
 
 def evaluation2(network1, network2, dataloader):
+    total = 0
+    for data in dataloader:
+        total += 1
+
     accuracy = 0.0
     for i, data in enumerate(dataloader, 0):
         X_test = data[0].to(device)
@@ -213,7 +221,7 @@ def evaluation2(network1, network2, dataloader):
         y_hat = torch.argmax(network2.forward(X_test), axis = 1)
         accuracy += torch.sum((y_test == y_hat).float()) # sum all the matched samples
 
-    accuracy = accuracy / (len(dataloader) * dataloader.batch_size)
+    accuracy = accuracy / total
 
     return accuracy
 

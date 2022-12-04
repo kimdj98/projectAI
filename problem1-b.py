@@ -272,36 +272,36 @@ print('Finished Training')
 #==================================================================================================================
 #   2d visualization step
 #==================================================================================================================
-# print('==================================')
-#
-# print("Start Visualization")
-# # train_data visualization
-# for i, data in enumerate(train_loader, 0):
-#     inputs, labels = data
-#     inputs = inputs.to(device)
-#     labels = labels
-#     output_2d = network.extract_2d(inputs).cpu().detach().numpy()
-#     output_2d_labels = labels.cpu().detach().numpy()
-#     plt.scatter(output_2d[:, 0], output_2d[:, 1], c=output_2d_labels)
-# plt.title("Train data visualization")
-# plt.xlabel("Activation of the 1st neuron")
-# plt.ylabel("Activation of the 2nd neuron")
-# plt.show()
-#
-# # test_data visualization
-# for i, data in enumerate(train_loader, 0):
-#     inputs, labels = data
-#     inputs = inputs.to(device)
-#     labels = labels
-#     output_2d = network.extract_2d(inputs).cpu().detach().numpy()
-#     output_2d_labels = labels.cpu().detach().numpy()
-#     plt.scatter(output_2d[:, 0], output_2d[:, 1], c=output_2d_labels)
-# plt.title("Test data visualization")
-# plt.xlabel("Activation of the 1st neuron")
-# plt.ylabel("Activation of the 2nd neuron")
-# plt.show()
-#
-# print("Finished Visualization")
+print('==================================')
+
+print("Start Visualization")
+# train_data visualization
+for i, data in enumerate(train_loader, 0):
+    inputs, labels = data
+    inputs = inputs.to(device)
+    labels = labels
+    output_2d = network.extract_2d(inputs).cpu().detach().numpy()
+    output_2d_labels = labels.cpu().detach().numpy()
+    plt.scatter(output_2d[:, 0], output_2d[:, 1], c=output_2d_labels)
+plt.title("Train data visualization")
+plt.xlabel("Activation of the 1st neuron")
+plt.ylabel("Activation of the 2nd neuron")
+plt.show()
+
+# test_data visualization
+for i, data in enumerate(train_loader, 0):
+    inputs, labels = data
+    inputs = inputs.to(device)
+    labels = labels
+    output_2d = network.extract_2d(inputs).cpu().detach().numpy()
+    output_2d_labels = labels.cpu().detach().numpy()
+    plt.scatter(output_2d[:, 0], output_2d[:, 1], c=output_2d_labels)
+plt.title("Test data visualization")
+plt.xlabel("Activation of the 1st neuron")
+plt.ylabel("Activation of the 2nd neuron")
+plt.show()
+
+print("Finished Visualization")
 
 #==================================================================================================================
 #   softmax regression with CNN dimension-reduced training set.

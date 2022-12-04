@@ -45,8 +45,6 @@ train_dataset = MNIST(download_root, transform=mnist_transform, train=True, down
 valid_dataset = MNIST(download_root, transform=mnist_transform, train=False, download=False)
 test_dataset = MNIST(download_root, transform=mnist_transform, train=False, download=False)
 
-
-
 # option 값 정의
 batch_size = 64
 
@@ -164,18 +162,18 @@ class CNN(nn.Module):
     #             print(f'Train Accuracy: {self.evaluation(train_loader):.4f}, Test Accuracy: {self.evaluation(test_loader):.4f}')
     #     return None
 
-    def evaluation(self, dataloader):
-        count = 0
-        accuracy = 0.0
-        for data in dataloader:
-            X_test = data[0]
-            y_test = data[1]
-            y_hat = torch.argmax(self.forward(X_test), axis = 1)
-            accuracy += torch.sum((y_test == y_hat).float()) # sum all the matched samples
-
-        accuracy = accuracy / (len(dataloader) * dataloader.batch_size) # divide by len of dataset
-
-        return accuracy
+    # def evaluation(self, dataloader):
+    #     count = 0
+    #     accuracy = 0.0
+    #     for data in dataloader:
+    #         X_test = data[0]
+    #         y_test = data[1]
+    #         y_hat = torch.argmax(self.forward(X_test), axis = 1)
+    #         accuracy += torch.sum((y_test == y_hat).float()) # sum all the matched samples
+    #
+    #     accuracy = accuracy / (len(dataloader) * dataloader.batch_size) # divide by len of dataset
+    #
+    #     return accuracy
 
 
 X_test = torch.from_numpy(X_test)
@@ -195,7 +193,6 @@ y_train = y_train.long()
 
 # function to evaluate network
 def evaluation(network, dataloader):
-    count = 0
     accuracy = 0.0
     for data in dataloader:
         X_test = data[0].to(device)
@@ -207,6 +204,19 @@ def evaluation(network, dataloader):
 
     return accuracy
 
+def evaluation2(network1, network2, dataloader):
+    accuracy = 0.0
+    for i, data in enumerate(dataloader, 0):
+        X_test = data[0].to(device)
+        y_test = data[1].to(device)
+        X_test = network1.extract_2d(X_test)
+        y_hat = torch.argmax(network2.forward(X_test), axis = 1)
+        accuracy += torch.sum((y_test == y_hat).float()) # sum all the matched samples
+
+    accuracy = accuracy / (len(dataloader) * dataloader.batch_size)
+
+    return accuracy
+
 
 
 #==================================================================================================================
@@ -214,7 +224,7 @@ def evaluation(network, dataloader):
 #==================================================================================================================
 
 network = CNN(configs).to(device)
-evaluation(network, train_loader)
+# evaluation(network, train_loader)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(network.parameters(), configs["learning_rate"])
@@ -222,6 +232,8 @@ optimizer = optim.Adam(network.parameters(), configs["learning_rate"])
 loss_history_per_batch = []
 train_accuracy_per_epoch = []
 test_accuracy_per_epoch = []
+
+print('==================================')
 print("Start Training")
 for epoch in range(configs["epochs"]):  # loop over the dataset multiple times
 
@@ -245,39 +257,106 @@ for epoch in range(configs["epochs"]):  # loop over the dataset multiple times
         if (i+1) % 100 == 0:
             running_loss = loss.item()
             print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss/100:.6f}')
-            running_loss = 0.0
             loss_history_per_batch.append(running_loss)
+        running_loss = 0.0
     train_accuracy = evaluation(network, train_loader)
     test_accuracy = evaluation(network, test_loader)
 
     print(f'train accuracy: {train_accuracy}')
     print(f'test accuracy:  {test_accuracy}')
 
-    train_accuracy_per_epoch.append(train_accuracy)
-    test_accuracy_per_epoch.append(test_accuracy)
+    train_accuracy_per_epoch.append(train_accuracy.cpu().detach().numpy())
+    test_accuracy_per_epoch.append(test_accuracy.cpu().detach().numpy())
 
 print('Finished Training')
+#==================================================================================================================
+#   2d visualization step
+#==================================================================================================================
+# print('==================================')
+#
+# print("Start Visualization")
+# # train_data visualization
+# for i, data in enumerate(train_loader, 0):
+#     inputs, labels = data
+#     inputs = inputs.to(device)
+#     labels = labels
+#     output_2d = network.extract_2d(inputs).cpu().detach().numpy()
+#     output_2d_labels = labels.cpu().detach().numpy()
+#     plt.scatter(output_2d[:, 0], output_2d[:, 1], c=output_2d_labels)
+# plt.title("Train data visualization")
+# plt.xlabel("Activation of the 1st neuron")
+# plt.ylabel("Activation of the 2nd neuron")
+# plt.show()
+#
+# # test_data visualization
+# for i, data in enumerate(train_loader, 0):
+#     inputs, labels = data
+#     inputs = inputs.to(device)
+#     labels = labels
+#     output_2d = network.extract_2d(inputs).cpu().detach().numpy()
+#     output_2d_labels = labels.cpu().detach().numpy()
+#     plt.scatter(output_2d[:, 0], output_2d[:, 1], c=output_2d_labels)
+# plt.title("Test data visualization")
+# plt.xlabel("Activation of the 1st neuron")
+# plt.ylabel("Activation of the 2nd neuron")
+# plt.show()
+#
+# print("Finished Visualization")
 
-for i, data in enumerate(train_loader, 0):
-    inputs, labels = data
-    inputs = inputs.to(device)
-    labels = labels
-    output_2d = network.extract_2d(inputs).cpu().detach().numpy()
-    output_2d_labels = labels.cpu().detach().numpy()
-    plt.scatter(output_2d[:, 0], output_2d[:, 1], c=output_2d_labels)
-plt.title("Train data visualization")
-plt.xlabel("Activation of the 1st neuron")
-plt.ylabel("Activation of the 2nd neuron")
-plt.show()
+#==================================================================================================================
+#   softmax regression with CNN dimension-reduced training set.
+#==================================================================================================================
+class LogRegression(nn.Module):
+    def __init__(self, configs):
+        super().__init__()
+        self.configs = configs
 
-for i, data in enumerate(train_loader, 0):
-    inputs, labels = data
-    inputs = inputs.to(device)
-    labels = labels
-    output_2d = network.extract_2d(inputs).cpu().detach().numpy()
-    output_2d_labels = labels.cpu().detach().numpy()
-    plt.scatter(output_2d[:, 0], output_2d[:, 1], c=output_2d_labels)
-plt.title("Test data visualization")
-plt.xlabel("Activation of the 1st neuron")
-plt.ylabel("Activation of the 2nd neuron")
-plt.show()
+        self.learning_rate = self.configs["learning_rate2"]
+        self.epochs = self.configs["epochs2"]
+
+        self.model = nn.Sequential(
+            nn.Linear(2, 10),
+        )
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
+# train logistic regression model with CNN dimension-reduced training set
+
+network2 = LogRegression(configs).to(device) # make network2 logistic regression model
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(network2.parameters(), configs["learning_rate2"])
+print('==================================')
+print('Start Training logistic regression')
+for epoch in range(configs["epochs2"]):
+
+    running_loss = 0.0
+    for i, data in enumerate(train_loader, 0):
+        inputs, labels = data
+        inputs = inputs.to(device)
+        inputs = network.extract_2d(inputs)
+        labels = labels.to(device)
+        # zero the parameter gradients
+        optimizer.zero_grad()
+        # forward + backward + optimize
+        outputs = network2.forward(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        # print statistics
+        if (i+1) % 100 == 0:
+            running_loss = loss.item()
+            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss/100:.6f}')
+            loss_history_per_batch.append(running_loss)
+            running_loss = 0.0
+
+    train_accuracy = evaluation2(network, network2, train_loader)
+    test_accuracy = evaluation2(network, network2, test_loader)
+    # calculate accuracy every epoch
+    print(f'train accuracy: {train_accuracy}')
+    print(f'test accuracy: {test_accuracy}')
+
+print('Finish Training logistic regression')

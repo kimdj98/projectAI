@@ -19,14 +19,12 @@ plt.ion()   # interactive mode
 # 학습을 위한 데이터 증가(Augmentation)와 일반화하기
 # 단지 검증을 위한 일반화하기
 transform_train = transforms.Compose([
-    transforms.Resize((32,32)),
     transforms.RandomHorizontalFlip(),
     transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
     transforms.ToTensor(),
     transforms.Normalize((0.4704,0.4534,0.4571),(0.1929,0.2107,0.2006))
 ])
 transform_test = transforms.Compose([
-    transforms.Resize((32,32)),
     transforms.ToTensor(),
     transforms.Normalize((0.4704,0.4534,0.4571),(0.1929,0.2107,0.2006))
 ])
@@ -86,7 +84,15 @@ temp = network.layer2[0].downsample[0].weight
 network.layer2[0].downsample[0] = nn.Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
 network.layer2[0].downsample[0].weight = temp
 
-
+# Apply dropout
+network.layer1[0].add_module('dropout',nn.Dropout(0.5))
+network.layer1[1].add_module('dropout',nn.Dropout(0.5))
+network.layer2[0].add_module('dropout',nn.Dropout(0.5))
+network.layer2[1].add_module('dropout',nn.Dropout(0.5))
+network.layer3[0].add_module('dropout',nn.Dropout(0.5))
+network.layer3[1].add_module('dropout',nn.Dropout(0.5))
+network.layer4[0].add_module('dropout',nn.Dropout(0.5))
+network.layer4[1].add_module('dropout',nn.Dropout(0.5))
 # freeze all weights
 for param in network.parameters():
     param.requires_grad = False
@@ -109,7 +115,7 @@ network = network.to(device)
 loss_fn = nn.CrossEntropyLoss()
 learning_rate = 0.01
 optimizer = optim.Adam(network.parameters(), learning_rate)
-num_epochs = 20
+num_epochs = 10
 
 for i in range(num_epochs):
     correct_train = 0
@@ -156,3 +162,18 @@ for i in range(num_epochs):
     train_accuracy.append(correct_train / size_train)
     test_loss.append(loss_test.item())
     test_accuracy.append(correct_test / size_test)
+
+plt.figure(figsize=(12, 6))
+plt.subplot(1, 2, 1)
+plt.plot(train_loss, label='Train loss')
+plt.plot(test_loss, label='Test loss')
+plt.title('Training and Test loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss value')
+
+plt.subplot(1, 2, 2)
+plt.plot(train_accuracy, label='Train accuracy')
+plt.plot(test_accuracy, label='Test accuracy')
+plt.title('Training and Test accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')

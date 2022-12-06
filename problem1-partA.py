@@ -71,29 +71,19 @@ for i in range(10000):
 # # execute pca analysis
 pca = PCA(n_components=2)
 principalComponents_train = pca.fit_transform(X_train)
-# principalDf = pd.DataFrame(data = principalComponents)
-#
-# y_train_series = pd.Series(y_train.reshape(-1))
-# finalDf1 = pd.concat([principalDf, y_train_series], axis = 1)
-#
-# plt.scatter(np.array(finalDf1['principal component 1']),
-#             np.array(finalDf1['principal component 2']),
-#             c = np.array(finalDf1.loc[:,0]))
+principalDf = pd.DataFrame(data = principalComponents_train, columns = ['principal component 1', 'principal component 2'])
+
+y_train_series = pd.Series(y_train.reshape(-1))
+finalDf1 = pd.concat([principalDf, y_train_series], axis = 1)
+
+plt.scatter(np.array(finalDf1['principal component 1']),
+            np.array(finalDf1['principal component 2']),
+            c=np.array(finalDf1.loc[:, 0]))
+
+plt.show()
 
 # execute pca analysis
 principalComponents_test = pca.fit_transform(X_test)
-# principalDf = pd.DataFrame(data = principalComponents,
-#                            columns = ['principal component 1', 'principal component 2'])
-#
-# y_test_series = pd.Series(y_test.reshape(-1))
-# finalDf2 = pd.concat([principalDf, y_test_series], axis = 1)
-
-# plt.scatter(np.array(finalDf2['principal component 1']),
-#             np.array(finalDf2['principal component 2']),
-#             c = np.array(finalDf2.loc[:,0]),
-#             label = np.array(finalDf2.loc[:,0]))
-# plt.show()
-
 
 # network architecture
 class MLP(nn.Module):

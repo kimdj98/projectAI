@@ -195,7 +195,7 @@ y_train = y_train.long()
 def evaluation(network, dataloader):
     total = 0
     for data in dataloader:
-        total += 1
+        total += len(data[0])
 
     accuracy = 0.0
     for data in dataloader:
@@ -205,13 +205,12 @@ def evaluation(network, dataloader):
         accuracy += torch.sum((y_test == y_hat).float()) # sum all the matched samples
 
     accuracy = accuracy / total # divide by len of dataset
-
     return accuracy
 
 def evaluation2(network1, network2, dataloader):
     total = 0
     for data in dataloader:
-        total += 1
+        total += len(data[0])
 
     accuracy = 0.0
     for i, data in enumerate(dataloader, 0):
@@ -222,7 +221,6 @@ def evaluation2(network1, network2, dataloader):
         accuracy += torch.sum((y_test == y_hat).float()) # sum all the matched samples
 
     accuracy = accuracy / total
-
     return accuracy
 
 

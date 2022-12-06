@@ -69,13 +69,27 @@ for param in model.parameters():
 # See the weights and bias in model
 #model.state_dict().keys()
 
-
+#####################
+# for problem 2-(b) #
+#####################
 # unfreeze specific weights
+# for name, param in model.named_parameters():
+#     if name in ['fc.weight', 'fc.bias']:
+#         param.requires_grad = True
+
+#####################
+# for problem 2-(c) #
+#####################
+# unfreeze specific weights
+intermediate_params = []
+last_params = []
 for name, param in model.named_parameters():
-    if name in ['fc.weight', 'fc.bias']:
+    if "fc2" in name:
         param.requires_grad = True
-
-
+        last_params.append(param)
+    if "layer4" in name:
+        param.requires_grad = True
+        intermediate_params.append(param)
 
 # change last layer feature size 1000 to 100
 num_features = model.fc.in_features
@@ -99,6 +113,7 @@ for name, param in model.named_parameters():
     if param.requires_grad == True:
         params_to_update.append(param)
         print("\t", name)
+
 
 #==================================================================================================================
 #   Training Stage
@@ -125,7 +140,14 @@ learning_rate = 0.001
 epochs = 10
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(params_to_update, learning_rate)
+optimizer = optim.Adam([{'params': last_params, 'lr': learning_rate},
+                       {'params': intermediate_params, 'lr': learning_rate*0.1}])
+
+
+# optimizer = torch.optim.SGD([
+#     {'params': list(model.parameters())[:-1], 'lr': 1e-4, 'momentum': 0.9, 'weight_decay': 1e-4},
+#     {'params': list(model.parameters())[-1], 'lr': 5e-3, 'momentum': 0.9, 'weight_decay': 1e-4}
+# ])
 
 loss_history_per_batch = []
 train_accuracy_per_epoch = []
@@ -150,13 +172,13 @@ for epoch in range(epochs):  # loop over the dataset multiple times
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-
         # print statistics
         if (i+1) % 10 == 0:
             running_loss = loss.item()
             print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss/10:.6f}')
             loss_history_per_batch.append(running_loss)
             running_loss = 0.0
+
     train_accuracy = evaluation(network, train_loader)
     test_accuracy = evaluation(network, test_loader)
 
@@ -168,15 +190,17 @@ for epoch in range(epochs):  # loop over the dataset multiple times
 
 print('Finished Training')
 
+plt.figure(figsize=(18, 6))
 plt.subplot(1, 2, 1)
 plt.plot(train_accuracy_per_epoch, label = 'train_accuracy')
-plt.plot(test_accuracy_per_epoch, label = 'test_accuraccy')
+plt.plot(test_accuracy_per_epoch, label = 'test_accuracy')
 plt.title('accuracy plot')
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 
 plt.subplot(1, 2, 2)
 plt.plot(loss_history_per_batch, label = 'loss')
-plt.title('accuracy plot')
+plt.title('loss plot')
 plt.xlabel('batch')
 plt.ylabel('Accuracy')
+plt.show()

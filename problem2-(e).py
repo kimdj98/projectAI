@@ -60,9 +60,9 @@ test_loader = torch.utils.data.DataLoader(test_set, batch_size = batch_size, shu
 #  problem2 -(a)
 #==================================================================================================================
 
-# freeze all weights
-for param in model.parameters():
-    param.requires_grad = False
+# # freeze all weights
+# for param in model.parameters():
+#     param.requires_grad = False
 
 # See the weights and bias in model
 #model.state_dict().keys()
@@ -135,12 +135,11 @@ def evaluation(network, dataloader):
 network = model
 # evaluation(network, train_loader)
 
-learning_rate = 0.001
+learning_rate = 0.01
 epochs = 10
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam([{'params': last_params, 'lr': learning_rate},
-                       {'params': intermediate_params, 'lr': learning_rate*0.1}])
+optimizer = optim.Adam(network.parameters(), 0.01)
 
 
 # optimizer = torch.optim.SGD([

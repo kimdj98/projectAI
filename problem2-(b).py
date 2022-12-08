@@ -137,7 +137,7 @@ network = model
 # evaluation(network, train_loader)
 
 learning_rate = 0.001
-epochs = 10
+epochs = 1
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(params_to_update, learning_rate)

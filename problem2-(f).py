@@ -78,16 +78,7 @@ for param in model.parameters():
 #####################
 # for problem 2-(c) #
 #####################
-# unfreeze specific weights
-intermediate_params = []
-last_params = []
-for name, param in model.named_parameters():
-    if "fc2" in name:
-        param.requires_grad = True
-        last_params.append(param)
-    if "fc2" not in name:
-        param.requires_grad = True
-        intermediate_params.append(param)
+
 
 
 # change last layer feature size 1000 to 100
@@ -105,7 +96,27 @@ model.layer4[0].add_module('dropout',nn.Dropout(0.5))
 model.layer4[1].add_module('dropout',nn.Dropout(0.5))
 
 # Apply 2 hidden layers as MLP neuron1: 600, neuron2: 600
-model.fc = nn.Sequential(nn.Linear(512,600), nn.Linear(600,600),nn.Linear(600,100))
+model.fc = nn.Sequential(nn.Linear(512,600),
+                         nn.ReLU(),
+                         nn.Linear(600,600),
+                         nn.ReLU(),
+                         nn.Linear(600,100))
+nn.init.xavier_uniform_(model.fc[0].weight)
+nn.init.xavier_uniform_(model.fc[2].weight)
+nn.init.xavier_uniform_(model.fc[4].weight)
+
+# unfreeze specific weights
+intermediate_params = []
+last_params = []
+
+for name, param in model.named_parameters():
+    if "fc" in name:
+        param.requires_grad = True
+        last_params.append(param)
+    if "fc" not in name:
+        param.requires_grad = False
+        intermediate_params.append(param)
+
 model = model.to(device)
 
 

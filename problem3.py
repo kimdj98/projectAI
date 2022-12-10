@@ -65,17 +65,6 @@ class FullyConvolutionalResnet18(models.ResNet):
 
 
 model = FullyConvolutionalResnet18(pretrained=True).eval()
-#==================================================================================================================
-#  import pretrained model
-#==================================================================================================================
-# model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
-#
-# model = nn.Sequential(*list(model.children())[:-2])
-#
-# num_classes = 1000
-# model.add_module('final_conv', nn.Conv2d(512, 1000, kernel_size=1))
-# model.add_module('transpose_conv', nn.ConvTranspose2d(num_classes, num_classes, kernel_size=64, padding=16, stride=32))
-# model.to(device)
 
 with torch.no_grad():
     preds = model(image)

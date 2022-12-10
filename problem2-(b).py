@@ -53,8 +53,10 @@ transform_test = transforms.Compose([
 batch_size = 64
 
 data_dir = '/home/kimdj/PycharmProjects/pythonProject/projectAI/Problem2_DATASET/face_dataset'
-train_set = ImageFolder(root=data_dir, transform = transform_train)
-test_set = ImageFolder(root=data_dir, transform = transform_test)
+train_dir = data_dir + '/facescrub_train'
+test_dir = data_dir + '/facescrub_test'
+train_set = ImageFolder(root=train_dir, transform = transform_train)
+test_set = ImageFolder(root=test_dir, transform = transform_test)
 train_loader = torch.utils.data.DataLoader(train_set, batch_size = batch_size, shuffle = True)
 test_loader = torch.utils.data.DataLoader(test_set, batch_size = batch_size, shuffle = True)
 
@@ -137,7 +139,7 @@ network = model
 # evaluation(network, train_loader)
 
 learning_rate = 0.001
-epochs = 1
+epochs = 15
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(params_to_update, learning_rate)

@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from torchvision import transforms, utils
+from torchinfo import summary
 
 
 # use GPU if exist
@@ -18,7 +19,7 @@ if __name__ == "__main__":
         labels = [line.strip() for line in f.readlines()][4:]
 
 # read image and transform
-original_image = cv2.imread("./Problem2_DATASET/computer_keyboard.jpg")
+original_image = cv2.imread("./Problem2_DATASET/green_lizard.jpeg")
 image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
 
 transform = transforms.Compose([
@@ -39,7 +40,7 @@ class FullyConvolutionalResnet18(models.ResNet):
             self.load_state_dict(state_dict)
 
         # replace AdapativeAvgPool2D with Standard AvgPool2D
-        self.avgpool = nn.AvgPool2d((7,7))
+        self.avgpool = nn.AdaptiveAvgPool2d((7,7))
 
         # Convert the original fc layer to a convolutional layer
         self.last_conv = torch.nn.Conv2d( in_channels = self.fc.in_features, out_channels = num_classes, kernel_size = 1)
@@ -75,7 +76,7 @@ model = FullyConvolutionalResnet18(pretrained=True).eval()
 # model.add_module('final_conv', nn.Conv2d(512, 1000, kernel_size=1))
 # model.add_module('transpose_conv', nn.ConvTranspose2d(num_classes, num_classes, kernel_size=64, padding=16, stride=32))
 # model.to(device)
-
+'''
 with torch.no_grad():
     preds = model(image)
     preds = torch.softmax(preds, dim = 1)
@@ -123,3 +124,4 @@ cv2.imshow("Original Image", original_image)
 cv2.imshow("scaled_score_map", score_map)
 cv2.imshow("activations_and_bbox", masked_image)
 cv2.waitKey(0)
+'''

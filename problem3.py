@@ -40,7 +40,7 @@ class FullyConvolutionalResnet18(models.ResNet):
             self.load_state_dict(state_dict)
 
         # replace AdapativeAvgPool2D with Standard AvgPool2D
-        self.avgpool = nn.AdaptiveAvgPool2d((7,7))
+        self.avgpool = nn.AvgPool2d((7,7))
 
         # Convert the original fc layer to a convolutional layer
         self.last_conv = torch.nn.Conv2d( in_channels = self.fc.in_features, out_channels = num_classes, kernel_size = 1)
